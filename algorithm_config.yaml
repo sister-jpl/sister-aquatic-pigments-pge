@@ -18,16 +18,8 @@ inputs:
 # remove below this line if no inputs
 # rename and set algorithm input names accordingly
   file:
-    - name: radiance_dataset
-      required: True
-    - name: location_dataset
-      required: True
-    - name: observation_dataset
+    - name: corrected_reflectance_dataset
       required: True
   config:
-    - name: segmentation_size
-      default: "50"
-    - name: n_cores
-      default: "32"
     - name: crid
       default: "000"

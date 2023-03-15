@@ -1,12 +1,16 @@
 pge_dir=$(cd "$(dirname "$0")" ; pwd -P)
 app_dir=$(dirname ${pge_dir})
 
-# Use isofit conda env from docker image
-source activate isofit
-
 cd $app_dir
-git clone https://github.com/isofit/isofit.git -b v2.9.3
-cd isofit
+git clone https://github.com/EnSpec/sister-mdn_chlorophyll.git -b sister-dev
+git clone https://github.com/EnSpec/sister-mdn_phycocyanin.git -b main
+
+# Create conda environment
+conda create -n aquatic-pigments -y -c conda-forge python=3.8 gdal
+source activate aquatic-pigments
+
+cd sister-mdn_chlorophyll
 pip install -e .
-pip install hy_tools_lite==1.1.1
-pip install Pillow==9.2.0
+
+cd ../sister-mdn_phycocyanin
+pip install -e .
