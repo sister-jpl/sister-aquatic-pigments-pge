@@ -16,7 +16,7 @@ conda deactivate
 popd
 
 # Create conda environment for phycocyanin
-conda create -n ap-phyco -y python=3.7.16 gdal
+conda create -n ap-phyco -y python=3.7 gdal
 source activate ap-phyco
 
 pushd sister-mdn_phycocyanin
