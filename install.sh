@@ -2,7 +2,7 @@ pge_dir=$(cd "$(dirname "$0")" ; pwd -P)
 app_dir=$(dirname ${pge_dir})
 
 cd $app_dir
-git clone https://github.com/EnSpec/sister-mdn_chlorophyll.git -b sister-dev
+git clone https://github.com/EnSpec/sister-mdn_chlorophyll.git -b master
 git clone https://github.com/EnSpec/sister-mdn_phycocyanin.git -b main
 
 # Create conda environment

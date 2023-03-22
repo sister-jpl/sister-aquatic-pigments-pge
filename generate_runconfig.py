@@ -3,7 +3,7 @@
 """
 SISTER
 Space-based Imaging Spectroscopy and Thermal PathfindER
-Author: Adam Chlus, Winston Olson-Duvall
+Author: Adam Chlus, Winston Olson-Duvall, Dan Yu
 """
 
 import json
@@ -14,7 +14,7 @@ import sys
 def main():
     """
         This function takes as input the path to an inputs.json file and exports a run config json
-        containing the arguments needed to run the SISTER ISOFIT PGE.
+        containing the arguments needed to run the SISTER aquatic-pigments PGE.
 
     """
 
@@ -28,8 +28,8 @@ def main():
     # Add metadata to runconfig
     rdn_basename = None
     for file in run_config["inputs"]["file"]:
-        if "radiance_dataset" in file:
-            rdn_basename = os.path.basename(file["radiance_dataset"])
+        if "corrected_reflectance_dataset" in file:
+            rdn_basename = os.path.basename(file["corrected_reflectance_dataset"])
 
     met_json_path = os.path.join("input", rdn_basename, f"{rdn_basename}.met.json")
     with open(met_json_path, "r") as f:

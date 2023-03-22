@@ -7,8 +7,7 @@ docker_container_url: mas.dit.maap-project.org/root/maap-workspaces/base_images/
 
 # fill out these fields
 # explain what this algorithm does
-algorithm_description: A SISTER wrapper PGE that executes two underlying algorithms to estimate aquatic pigments (phycocyanin
-and chlorophyll A).
+algorithm_description: A SISTER wrapper PGE that executes two underlying algorithms to estimate aquatic pigments (phycocyanin and chlorophyll A).
 build_command: sister-aquatic-pigments-pge/install.sh
 # path to the wrapper script for running the algorithm
 run_command: sister-aquatic-pigments-pge/run.sh
