@@ -5,6 +5,10 @@ pushd $app_dir
 git clone https://github.com/EnSpec/sister-mdn_chlorophyll.git -b master
 git clone https://github.com/EnSpec/sister-mdn_phycocyanin.git -b main
 
+# Copy model weights file to chlorophyll
+
+aws cp http://s3//sister-ops-registry/packages/mdn_chlorophyll_weights/HICO/45313342cb628c8cf45b6e2e29f4dc9a780ee1d403bdb98461e28fcb13ad9ce3.zip sister-mdn_chlorophyll/MDN/Weights/HICO/45313342cb628c8cf45b6e2e29f4dc9a780ee1d403bdb98461e28fcb13ad9ce3.zip
+
 # Create conda environment for chlorophyll-a
 conda create -n ap-chla -y python=3.8 gdal
 source activate ap-chla
