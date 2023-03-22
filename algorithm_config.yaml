@@ -20,7 +20,7 @@ inputs:
     - name: corrected_reflectance_dataset
       required: True
     - name: fractional_cover_dataset
-        required: True
+      required: True
   config:
     - name: crid
       default: "000"
