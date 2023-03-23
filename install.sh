@@ -8,7 +8,7 @@ git clone https://github.com/EnSpec/sister-mdn_chlorophyll.git -b master
 git clone https://github.com/EnSpec/sister-mdn_phycocyanin.git -b main
 
 # Create conda environment for chlorophyll-a and install
-conda create -n ap-chla -y python=3.8 gdal awscli
+conda create -n ap-chla -y -c conda-forge python=3.8 gdal=3 awscli
 source activate ap-chla
 
 pushd sister-mdn_chlorophyll
@@ -19,7 +19,7 @@ conda deactivate
 popd
 
 # Create conda environment for phycocyanin and install
-conda create -n ap-phyco -y python=3.7.16 gdal
+conda create -n ap-phyco -y -c conda-forge python=3.7.16 gdal=3
 source activate ap-phyco
 
 pushd sister-mdn_phycocyanin
