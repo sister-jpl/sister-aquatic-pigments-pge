@@ -26,12 +26,12 @@ def main():
     run_config = {"inputs": inputs}
 
     # Add metadata to runconfig
-    rdn_basename = None
+    corfl_basename = None
     for file in run_config["inputs"]["file"]:
         if "corrected_reflectance_dataset" in file:
-            rdn_basename = os.path.basename(file["corrected_reflectance_dataset"])
+            corfl_basename = os.path.basename(file["corrected_reflectance_dataset"])
 
-    met_json_path = os.path.join("input", rdn_basename, f"{rdn_basename}.met.json")
+    met_json_path = os.path.join("input", corfl_basename, f"{corfl_basename}.met.json")
     with open(met_json_path, "r") as f:
         metadata = json.load(f)
     run_config["metadata"] = metadata
