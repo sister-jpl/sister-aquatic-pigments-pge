@@ -8,6 +8,7 @@ Author: Winston Olson-Duvall
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 
@@ -132,6 +133,12 @@ def main():
                       {'product': 'AQUAPIG_PHYCO',
                        'processing_level': 'L2B',
                        'description': "Phycocyanin content (mg-m3) estimated using mixture density network."})
+
+    # TODO: Create PNG with path output/{aquapig_basename}.png
+    # TODO: Convert ENVI files in work dir to GeoTIFF and copy to output dir
+
+    # Copy any remaining files to output
+    shutil.copyfile("runconfig.json", f"output/{aquapig_basename}.runconfig.json")
 
 
 if __name__ == "__main__":
