@@ -12,7 +12,12 @@ import shutil
 import subprocess
 import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 from osgeo import gdal
+from PIL import Image
+
 
 
 def get_aquapig_basename(corfl_basename, crid):
@@ -32,7 +37,7 @@ def generate_metadata(run_config, json_path, new_metadata):
         json.dump(metadata, out_obj, indent=4)
 
 
-def convert_to_geotiff(pigment_path, band_name, units, description):
+def convert_to_geotiff_and_png(pigment_path, band_name, units, description):
 
     in_file = gdal.Open(pigment_path)
 
@@ -51,7 +56,7 @@ def convert_to_geotiff(pigment_path, band_name, units, description):
     tiff.SetProjection(in_file.GetProjection())
 
     # Dataset description
-    tiff.SetMetadataItem("DESCRIPTION", "ADD DESCRIPTION HERE")
+    tiff.SetMetadataItem("DESCRIPTION", description)
 
     in_band = in_file.GetRasterBand(1)
 
@@ -64,11 +69,34 @@ def convert_to_geotiff(pigment_path, band_name, units, description):
 
     del tiff, driver
 
-    # Cloud optimized geotiff
+    # Save as cloud optimized geotiff
     cog_file = f"output/{os.path.basename(temp_file).replace('_tmp.tif', '.tif')}"
-
     os.system(f"gdaladdo -minsize 900 {temp_file}")
     os.system(f"gdal_translate {temp_file} {cog_file} -co COMPRESS=LZW -co TILED=YES -co COPY_SRC_OVERVIEWS=YES")
+
+    # Convert to PNG
+    pigment = in_band.ReadAsArray()
+    pigment[pigment == in_band.GetNoDataValue()] = np.nan
+
+    # Log transform for better visualization
+    pigment = np.log10(pigment)
+
+    # Clip image and normalize 0-1
+    low = np.nanpercentile(pigment, 5)
+    hi = np.nanpercentile(pigment, 95)
+    pigment = (pigment - low) / (hi - low)
+
+    cmap = plt.get_cmap('winter')
+
+    qlook = cmap(pigment)[:, :, :3]
+    qlook = (255 * qlook).astype(np.uint8)
+    qlook[np.isnan(pigment)] = 0
+
+    im = Image.fromarray(qlook, 'RGB')
+
+    quicklook_file = cog_file.replace(".tif", ".png")
+
+    im.save(quicklook_file)
 
 
 def main():
@@ -156,6 +184,8 @@ def main():
     print("Running phyco command: " + " ".join(phyco_cmd))
     subprocess.run(" ".join(phyco_cmd), shell=True)
 
+    # Generate metadata
+    print("Generating metadata in .met.json files")
     generate_metadata(run_config,
                       f"output/{aquapig_basename}.met.json",
                       {'product': 'AQUAPIG',
@@ -177,12 +207,13 @@ def main():
                        'processing_level': 'L2B',
                        'description': phyco_desc})
 
-    # TODO: Create PNG with path output/{aquapig_basename}.png
-    # TODO: Convert ENVI files in work dir to GeoTIFF and copy to output dir
-    convert_to_geotiff(tmp_chla_envi_name, "chlorophyll_a", "mg-m3", chla_desc)
-    convert_to_geotiff(tmp_phyco_envi_name, "phycocyanin", "mg-m3", phyco_desc)
+    # Convert to geotiff and png
+    print("Converting ENVI files to GeoTIFF and PNG and saving to output folder")
+    convert_to_geotiff_and_png(tmp_chla_envi_name, "chlorophyll_a", "mg-m3", chla_desc)
+    convert_to_geotiff_and_png(tmp_phyco_envi_name, "phycocyanin", "mg-m3", phyco_desc)
 
     # Copy any remaining files to output
+    print("Copying runconfig to output folder")
     shutil.copyfile("runconfig.json", f"output/{aquapig_basename}.runconfig.json")
 
 
