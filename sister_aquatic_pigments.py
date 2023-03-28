@@ -37,12 +37,12 @@ def generate_metadata(run_config, json_path, new_metadata):
         json.dump(metadata, out_obj, indent=4)
 
 
-def convert_to_geotiff_and_png(pigment_path, band_name, units, description):
+def convert_to_geotiff_and_png(pigment_path, basename, band_name, units, description):
 
     in_file = gdal.Open(pigment_path)
 
     # Temporary geotiff
-    temp_file = pigment_path + "_tmp.tif"
+    temp_file = f"work/{basename}_tmp.tif"
 
     # Set the output raster transform and projection properties
     driver = gdal.GetDriverByName("GTIFF")
@@ -70,7 +70,7 @@ def convert_to_geotiff_and_png(pigment_path, band_name, units, description):
     del tiff, driver
 
     # Save as cloud optimized geotiff
-    cog_file = f"output/{os.path.basename(temp_file).replace('_tmp.tif', '.tif')}"
+    cog_file = f"output/{basename}.tif"
     os.system(f"gdaladdo -minsize 900 {temp_file}")
     os.system(f"gdal_translate {temp_file} {cog_file} -co COMPRESS=LZW -co TILED=YES -co COPY_SRC_OVERVIEWS=YES")
 
@@ -141,10 +141,8 @@ def main():
     corfl_envi_path = f"input/{corfl_basename}/{corfl_basename}.bin"
     frcov_tiff_path = f"input/{frcov_basename}/{frcov_basename}.tif"
 
-    tmp_chla_envi_name = f"{corfl_basename}_aqchla"
-    tmp_chla_hdr_name = f"{corfl_basename}_aqchla.hdr"
-    tmp_phyco_envi_name = f"{corfl_basename}_phyco"
-    tmp_phyco_hdr_name = f"{corfl_basename}_phyco.hdr"
+    tmp_chla_envi_path = f"work/{corfl_basename}_aqchla"
+    tmp_phyco_envi_path = f"work/{corfl_basename}_phyco"
 
     log_path = f"output/{aquapig_basename}.log"
 
@@ -209,8 +207,8 @@ def main():
 
     # Convert to geotiff and png
     print("Converting ENVI files to GeoTIFF and PNG and saving to output folder")
-    convert_to_geotiff_and_png(tmp_chla_envi_name, "chlorophyll_a", "mg-m3", chla_desc)
-    convert_to_geotiff_and_png(tmp_phyco_envi_name, "phycocyanin", "mg-m3", phyco_desc)
+    convert_to_geotiff_and_png(tmp_chla_envi_path, chla_basename, "chlorophyll_a", "mg-m3", chla_desc)
+    convert_to_geotiff_and_png(tmp_phyco_envi_path, phyco_basename, "phycocyanin", "mg-m3", phyco_desc)
 
     # Copy any remaining files to output
     print("Copying runconfig to output folder")
