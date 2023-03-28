@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Use aquatic-pigments conda env from docker image
-conda activate ap-chla
+source activate ap-chla
 
 # Get repository directory
 REPO_DIR=$(cd "$(dirname "$0")"; pwd -P)
