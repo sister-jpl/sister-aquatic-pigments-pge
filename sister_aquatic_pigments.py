@@ -12,6 +12,8 @@ import shutil
 import subprocess
 import sys
 
+from osgeo import gdal
+
 
 def get_aquapig_basename(corfl_basename, crid):
     # Replace product type
@@ -28,6 +30,45 @@ def generate_metadata(run_config, json_path, new_metadata):
         metadata[key] = value
     with open(json_path, 'w') as out_obj:
         json.dump(metadata, out_obj, indent=4)
+
+
+def convert_to_geotiff(pigment_path, band_name, units, description):
+
+    in_file = gdal.Open(pigment_path)
+
+    # Temporary geotiff
+    temp_file = pigment_path + "_tmp.tif"
+
+    # Set the output raster transform and projection properties
+    driver = gdal.GetDriverByName("GTIFF")
+    tiff = driver.Create(temp_file,
+                         in_file.RasterXSize,
+                         in_file.RasterYSize,
+                         1,
+                         gdal.GDT_Float32)
+
+    tiff.SetGeoTransform(in_file.GetGeoTransform())
+    tiff.SetProjection(in_file.GetProjection())
+
+    # Dataset description
+    tiff.SetMetadataItem("DESCRIPTION", "ADD DESCRIPTION HERE")
+
+    in_band = in_file.GetRasterBand(1)
+
+    out_band = tiff.GetRasterBand(1)
+    out_band.WriteArray(in_band.ReadAsArray())
+    out_band.SetDescription(band_name)
+    out_band.SetNoDataValue(in_band.GetNoDataValue())
+    out_band.SetMetadataItem("UNITS", units)
+    out_band.SetMetadataItem("DESCRIPTION", description)
+
+    del tiff, driver
+
+    # Cloud optimized geotiff
+    cog_file = f"output/{os.path.basename(temp_file).replace('_tmp.tif', '.tif')}"
+
+    os.system(f"gdaladdo -minsize 900 {temp_file}")
+    os.system(f"gdal_translate {temp_file} {cog_file} -co COMPRESS=LZW -co TILED=YES -co COPY_SRC_OVERVIEWS=YES")
 
 
 def main():
@@ -122,20 +163,24 @@ def main():
                        'description': "Aquatic pigments - chlorophyll A content mg-m3, and phycocyanin content (mg-m3) "
                                       "estimated using mixture density network."})
 
+    chla_desc = "Chlorophyll A content mg-m3"
     generate_metadata(run_config,
                       f"output/{chla_basename}.met.json",
                       {'product': 'AQUAPIG_CHL',
                        'processing_level': 'L2B',
-                       'description': "Chlorophyll A content mg-m3"})
+                       'description': chla_desc})
 
+    phyco_desc = "Phycocyanin content (mg-m3) estimated using mixture density network."
     generate_metadata(run_config,
                       f"output/{phyco_basename}.met.json",
                       {'product': 'AQUAPIG_PHYCO',
                        'processing_level': 'L2B',
-                       'description': "Phycocyanin content (mg-m3) estimated using mixture density network."})
+                       'description': phyco_desc})
 
     # TODO: Create PNG with path output/{aquapig_basename}.png
     # TODO: Convert ENVI files in work dir to GeoTIFF and copy to output dir
+    convert_to_geotiff(tmp_chla_envi_name, "chlorophyll_a", "mg-m3", chla_desc)
+    convert_to_geotiff(tmp_phyco_envi_name, "phycocyanin", "mg-m3", phyco_desc)
 
     # Copy any remaining files to output
     shutil.copyfile("runconfig.json", f"output/{aquapig_basename}.runconfig.json")
