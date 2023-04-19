@@ -188,17 +188,17 @@ def main():
                       f"output/{aquapig_basename}.met.json",
                       {'product': 'AQUAPIG',
                        'processing_level': 'L2B',
-                       'description': "Aquatic pigments - chlorophyll A content mg-m3, and phycocyanin content (mg-m3) "
+                       'description': "Aquatic pigments - chlorophyll A content mg m-3, and phycocyanin content (mg m-3) "
                                       "estimated using mixture density network."})
 
-    chla_desc = "Chlorophyll A content mg-m3"
+    chla_desc = "Chlorophyll A content mg m-3"
     generate_metadata(run_config,
                       f"output/{chla_basename}.met.json",
                       {'product': 'AQUAPIG_CHL',
                        'processing_level': 'L2B',
                        'description': chla_desc})
 
-    phyco_desc = "Phycocyanin content (mg-m3) estimated using mixture density network."
+    phyco_desc = "Phycocyanin content (mg m-3) estimated using mixture density network."
     generate_metadata(run_config,
                       f"output/{phyco_basename}.met.json",
                       {'product': 'AQUAPIG_PHYCO',
@@ -207,8 +207,8 @@ def main():
 
     # Convert to geotiff and png
     print("Converting ENVI files to GeoTIFF and PNG and saving to output folder")
-    convert_to_geotiff_and_png(tmp_chla_envi_path, chla_basename, "chlorophyll_a", "mg-m3", chla_desc)
-    convert_to_geotiff_and_png(tmp_phyco_envi_path, phyco_basename, "phycocyanin", "mg-m3", phyco_desc)
+    convert_to_geotiff_and_png(tmp_chla_envi_path, chla_basename, "chlorophyll_a", "mg m-3", chla_desc)
+    convert_to_geotiff_and_png(tmp_phyco_envi_path, phyco_basename, "phycocyanin", "mg m-3", phyco_desc)
 
     # Copy any remaining files to output
     print("Copying runconfig to output folder")
