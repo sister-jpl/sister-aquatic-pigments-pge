@@ -1,92 +1,87 @@
-# SISTER Aquatic Pigments
-
-
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/geospec/sister-aquatic-pigments.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.com/geospec/sister-aquatic-pigments/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
+# SISTER Aquatic Pigments PGE Documentation
 
 ## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+The sister-aquatic-pigments-pge repository is a wrapper for two aquatic pigment estimation repositories:
+* [Chlorophyll A](https://github.com/EnSpec/sister-mdn_chlorophyll)
+* [Phycocyanin](https://github.com/EnSpec/sister-mdn_phycocyanin)
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Dependencies
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+This repository is built to run on SISTER (Space-based Imaging Spectroscopy and Thermal pathfindER), a data 
+processing back-end that allows for the registration of algorithms as executable containers and execution of those 
+containers at scale.  The manifest file that configures this repository for registration and describes all of its 
+necessary dependencies is called `algorithm_config.yaml`.  In this file you will find:
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+* The repository URL and version to register
+* The base Docker image which this repository gets installed into, and a reference to its Dockerfile
+* The build script which is used to install this repository into the base Docker image
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+Specific dependencies for executing the code in this repository can be found in both the Dockerfile and the build 
+script.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+In addition to the above dependencies, you will need access to the MAAP API via the maap-py library in order to 
+register algorithms and submit jobs.  maap-py can be obtained by running:
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+    git clone --single-branch --branch sister-dev https://gitlab.com/geospec/maap-py.git
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## PGE Arguments
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+The sister-aquatic-pigments-pge PGE takes the following arguments:
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
 
-## License
-For open source projects, say how it is licensed.
+| Argument                      | Type   | Description                                        | Default |
+|-------------------------------|--------|----------------------------------------------------|---------|
+| corrected_reflectance_dataset | file   | S3 URL to the corrected reflectance dataset folder | -       |
+| fractional_cover_dataset      | file   | S3 URL to the fractional cover dataset folder      | -       |
+| crid                          | config | Composite Release ID to tag file names             | 000     |
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## Outputs
+
+The L2B aquatic pigments PGE outputs Cloud-Optimized GeoTIFFs (COGs) and associated metadata and ancillary files. The 
+outputs of the PGE use the following naming convention:
+
+    SISTER_INSTRUMENT_LEVEL_PRODUCT_YYYYMMDDTHHMMSS_CRID(_ANCILLARY).EXTENSION
+
+where `(_ANCILLARY)` is optional and is used to identify ancillary products.
+
+| Product                     | Format, Units                   | Example filename                                           |
+|-----------------------------|---------------------------------|------------------------------------------------------------|
+| Chlorophyll A concentration | Cloud-Optimized GeoTIFF, mg m-3 | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_CHL.tif        |
+| Chlorophyll A metadata      | JSON                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_CHL.met.json   |
+| Chlorophyll A browse image  | PNG                             | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_CHL.png        |
+| Phycocyanin concentration   | Cloud-Optimized GeoTIFF, mg m-3 | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_PHYCO.tif      |
+| Phycocyanin metadata        | JSON                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_PHYCO.met.json |
+| Phycocyanin browse image    | PNG                             | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_PHYCO.png      |
+| PGE metadata                | JSON                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000.met.json       |
+| PGE log file                | Text                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000.log            |
+| PGE run config              | JSON                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000.runconfig.json |
+
+## Registering the Repository with SISTER
+
+    from maap.maap import MAAP
+    
+    maap = MAAP(maap_host="34.216.77.111")
+    
+    algo_config_path = "sister-aquatic-pigments-pge/algorithm_config.yaml"
+    response = maap.register_algorithm_from_yaml_file(file_path=algo_config_path)
+    print(response.text)
+
+## Submitting a Job on SISTER
+
+    from maap.maap import MAAP
+    
+    maap = MAAP(maap_host="34.216.77.111")
+    
+    response = maap.submitJob(
+        algo_id="sister-aquatic-pigments-pge",
+        version="1.0.0",
+        corrected_reflectance_dataset="s3://s3.us-west-2.amazonaws.com:80/sister-ops-workspace/LOM/PRODUCTS/AVNG/L2A_CORFL/2021/06/04/SISTER_AVNG_L2A_CORFL_20210604T090303_001",
+        fractional_cover_dataset="s3://s3.us-west-2.amazonaws.com:80/sister-ops-workspace/LOM/PRODUCTS/AVNG/L2B_FRCOV/2021/06/04/SISTER_AVNG_L2B_FRCOV_20210604T090303_001",
+        crid="000",
+        publish_to_cmr=False,
+        cmr_metadata={},
+        queue="sister-job_worker-16gb",
+        identifier="WO_AP_20230425_AVNG_1")
+    
+    print(response.id, response.status)
