@@ -4,8 +4,8 @@ app_dir=$(dirname ${pge_dir})
 # Clone the repositories into the app directory
 
 pushd $app_dir
-git clone https://github.com/EnSpec/sister-mdn_chlorophyll.git -b master
-git clone https://github.com/EnSpec/sister-mdn_phycocyanin.git -b main
+git clone https://github.com/EnSpec/sister-mdn_chlorophyll.git -b 1.0.0
+git clone https://github.com/EnSpec/sister-mdn_phycocyanin.git -b 1.0.0
 
 # Create conda environment for chlorophyll-a and install
 conda create -n ap-chla -y -c conda-forge python=3.8 gdal=3.1 awscli=1
