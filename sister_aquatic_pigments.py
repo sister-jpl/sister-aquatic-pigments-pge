@@ -38,7 +38,7 @@ def generate_metadata(run_config, json_path, new_metadata):
         json.dump(metadata, out_obj, indent=4)
 
 
-def convert_to_geotiff_and_png(pigment_path, basename, band_name, units, description):
+def convert_to_geotiff_and_png(pigment_path, basename, band_name, units, description, disclaimer):
 
     in_file = gdal.Open(pigment_path)
 
@@ -57,7 +57,7 @@ def convert_to_geotiff_and_png(pigment_path, basename, band_name, units, descrip
     tiff.SetProjection(in_file.GetProjection())
 
     # Dataset description
-    tiff.SetMetadataItem("DESCRIPTION", description)
+    tiff.SetMetadataItem("DESCRIPTION", disclaimer + description)
 
     in_band = in_file.GetRasterBand(1)
 
@@ -194,24 +194,24 @@ def main():
                        'description': f"{disclaimer}Aquatic pigments - chlorophyll A content mg m-3, and phycocyanin "
                                       f"content (mg m-3) estimated using mixture density network."})
 
-    chla_desc = f"{disclaimer}Chlorophyll A content mg m-3"
+    chla_desc = "Chlorophyll A content mg m-3"
     generate_metadata(run_config,
                       f"output/{chla_basename}.met.json",
                       {'product': 'AQUAPIG_CHL',
                        'processing_level': 'L2B',
-                       'description': chla_desc})
+                       'description': disclaimer + chla_desc})
 
-    phyco_desc = f"{disclaimer}Phycocyanin content (mg m-3) estimated using mixture density network."
+    phyco_desc = "Phycocyanin content (mg m-3) estimated using mixture density network."
     generate_metadata(run_config,
                       f"output/{phyco_basename}.met.json",
                       {'product': 'AQUAPIG_PHYCO',
                        'processing_level': 'L2B',
-                       'description': phyco_desc})
+                       'description': disclaimer + phyco_desc})
 
     # Convert to geotiff and png
     print("Converting ENVI files to GeoTIFF and PNG and saving to output folder")
-    convert_to_geotiff_and_png(tmp_chla_envi_path, chla_basename, "chlorophyll_a", "mg m-3", chla_desc)
-    convert_to_geotiff_and_png(tmp_phyco_envi_path, phyco_basename, "phycocyanin", "mg m-3", phyco_desc)
+    convert_to_geotiff_and_png(tmp_chla_envi_path, chla_basename, "chlorophyll_a", "mg m-3", chla_desc, disclaimer)
+    convert_to_geotiff_and_png(tmp_phyco_envi_path, phyco_basename, "phycocyanin", "mg m-3", phyco_desc, disclaimer)
 
     # Copy any remaining files to output
     print("Copying runconfig to output folder")
