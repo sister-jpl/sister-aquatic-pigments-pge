@@ -24,3 +24,5 @@ inputs:
   config:
     - name: crid
       default: "000"
+    - name: experimental
+      default: "True"

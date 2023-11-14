@@ -6,6 +6,7 @@ Space-based Imaging Spectroscopy and Thermal PathfindER
 Author: Winston Olson-Duvall
 """
 
+import glob
 import json
 import os
 import shutil
@@ -112,6 +113,13 @@ def main():
     with open(in_file, "r") as f:
         run_config = json.load(f)
 
+    # Get experimental
+    experimental = run_config['inputs']['experimental']
+    if experimental:
+        disclaimer = "(DISCLAIMER: THIS DATA IS EXPERIMENTAL AND NOT INTENDED FOR SCIENTIFIC USE) "
+    else:
+        disclaimer = ""
+
     # Make work dir
     print("Making work directory")
     if not os.path.exists("work"):
@@ -127,14 +135,9 @@ def main():
     mdn_chla_dir = os.path.join(os.path.dirname(sister_aqua_pig_dir), "sister-mdn_chlorophyll")
     mdn_phyco_dir = os.path.join(os.path.dirname(sister_aqua_pig_dir), "sister-mdn_phycocyanin")
 
-    corfl_basename = None
-    frcov_basename = None
-    for file in run_config["inputs"]["file"]:
-        if "corrected_reflectance_dataset" in file:
-            corfl_basename = os.path.basename(file["corrected_reflectance_dataset"])
-        if "fractional_cover_dataset" in file:
-            frcov_basename = os.path.basename(file["fractional_cover_dataset"])
-    aquapig_basename = get_aquapig_basename(corfl_basename, run_config["inputs"]["config"]["crid"])
+    corfl_basename = os.path.basename(run_config["inputs"]["corrected_reflectance_dataset"])
+    frcov_basename = os.path.basename(run_config["inputs"]["fractional_cover_dataset"])
+    aquapig_basename = get_aquapig_basename(corfl_basename, run_config["inputs"]["crid"])
     chla_basename = f"{aquapig_basename}_CHL"
     phyco_basename = f"{aquapig_basename}_PHYCO"
 
@@ -188,17 +191,17 @@ def main():
                       f"output/{aquapig_basename}.met.json",
                       {'product': 'AQUAPIG',
                        'processing_level': 'L2B',
-                       'description': "Aquatic pigments - chlorophyll A content mg m-3, and phycocyanin content (mg m-3) "
-                                      "estimated using mixture density network."})
+                       'description': f"{disclaimer}Aquatic pigments - chlorophyll A content mg m-3, and phycocyanin "
+                                      f"content (mg m-3) estimated using mixture density network."})
 
-    chla_desc = "Chlorophyll A content mg m-3"
+    chla_desc = f"{disclaimer}Chlorophyll A content mg m-3"
     generate_metadata(run_config,
                       f"output/{chla_basename}.met.json",
                       {'product': 'AQUAPIG_CHL',
                        'processing_level': 'L2B',
                        'description': chla_desc})
 
-    phyco_desc = "Phycocyanin content (mg m-3) estimated using mixture density network."
+    phyco_desc = f"{disclaimer}Phycocyanin content (mg m-3) estimated using mixture density network."
     generate_metadata(run_config,
                       f"output/{phyco_basename}.met.json",
                       {'product': 'AQUAPIG_PHYCO',
@@ -213,6 +216,11 @@ def main():
     # Copy any remaining files to output
     print("Copying runconfig to output folder")
     shutil.copyfile("runconfig.json", f"output/{aquapig_basename}.runconfig.json")
+
+    # If experimental, prefix filenames with "EXPERIMENTAL-"
+    if experimental:
+        for file in glob.glob(f"output/SISTER*"):
+            shutil.move(file, f"output/EXPERIMENTAL-{os.path.basename(file)}")
 
 
 if __name__ == "__main__":
