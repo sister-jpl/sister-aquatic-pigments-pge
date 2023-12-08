@@ -25,4 +25,3 @@ source activate ap-phyco
 
 pushd sister-mdn_phycocyanin
 pip install -e .
-pip install pystac==1.8.4
