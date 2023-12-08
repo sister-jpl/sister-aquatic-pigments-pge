@@ -10,6 +10,7 @@ git clone https://github.com/EnSpec/sister-mdn_phycocyanin.git -b 1.0.0
 # Create conda environment for chlorophyll-a and install
 conda create -n ap-chla -y -c conda-forge python=3.8 gdal=3.1 awscli=1
 source activate ap-chla
+pip install pystac==1.8.4
 
 pushd sister-mdn_chlorophyll
 aws s3 cp s3://sister-ops-registry/packages/mdn_chlorophyll_weights/HICO/45313342cb628c8cf45b6e2e29f4dc9a780ee1d403bdb98461e28fcb13ad9ce3.zip MDN/Weights/HICO/45313342cb628c8cf45b6e2e29f4dc9a780ee1d403bdb98461e28fcb13ad9ce3.zip
@@ -24,3 +25,4 @@ source activate ap-phyco
 
 pushd sister-mdn_phycocyanin
 pip install -e .
+pip install pystac==1.8.4
