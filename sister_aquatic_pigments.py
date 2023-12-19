@@ -153,6 +153,9 @@ def main():
     else:
         disclaimer = ""
 
+    # Save runconfig metadata separately for now due to duplicate geometry points issue
+    run_config_meta = run_config["metadata"]
+
     # Make work dir
     print("Making work directory")
     if not os.path.exists("work"):
@@ -241,7 +244,7 @@ def main():
     aquapig_basename = os.path.basename(log_path)[:-4]
 
     # Generate STAC
-    catalog = pystac.Catalog(id=corfl_basename,
+    catalog = pystac.Catalog(id=aquapig_basename,
                              description=f'{disclaimer}This catalog contains the output data products of the SISTER '
                                          f'aquatic pigments PGE, including chlorophyll A and phycocyanin in '
                                          f'cloud-optimized GeoTIFF format. Execution artifacts including the '
@@ -250,7 +253,7 @@ def main():
     # Add an item for the top level to hold runconfig and log
     description = f"{disclaimer}Aquatic pigments - chlorophyll A content mg m-3, and phycocyanin content (mg m-3) " \
                   f"estimated using mixture density network."
-    metadata = generate_stac_metadata(aquapig_basename, description, run_config["metadata"])
+    metadata = generate_stac_metadata(aquapig_basename, description, run_config_meta)
     assets = {
         "runconfig": f"./{os.path.basename(out_runconfig_path)}",
         "log": f"./{os.path.basename(log_path)}",
@@ -266,8 +269,8 @@ def main():
         if "CHL" in tif_basename:
             description = disclaimer + chla_desc
         elif "PHYCO" in tif_basename:
-            description = disclaimer +phyco_desc
-        metadata = generate_stac_metadata(tif_basename, description, run_config["metadata"])
+            description = disclaimer + phyco_desc
+        metadata = generate_stac_metadata(tif_basename, description, run_config_meta)
         assets = {
             "cog": f"./{os.path.basename(tif_file)}",
             "browse": f"./{os.path.basename(tif_file).replace('.tif', '.png')}",
