@@ -99,7 +99,7 @@ def generate_stac_metadata(basename, description, in_meta):
     out_meta['start_datetime'] = dt.datetime.strptime(in_meta['start_time'], "%Y-%m-%dT%H:%M:%SZ")
     out_meta['end_datetime'] = dt.datetime.strptime(in_meta['end_time'], "%Y-%m-%dT%H:%M:%SZ")
     # Split corner coordinates string into list
-    geometry = in_meta['bounding_box']
+    geometry = in_meta['bounding_box'].copy()
     # Add first coord to the end of the list to close the polygon
     geometry.append(geometry[0])
     out_meta['geometry'] = geometry
@@ -152,9 +152,6 @@ def main():
         disclaimer = "(DISCLAIMER: THIS DATA IS EXPERIMENTAL AND NOT INTENDED FOR SCIENTIFIC USE) "
     else:
         disclaimer = ""
-
-    # Save runconfig metadata separately for now due to duplicate geometry points issue
-    run_config_meta = run_config["metadata"]
 
     # Make work dir
     print("Making work directory")
@@ -253,7 +250,7 @@ def main():
     # Add an item for the top level to hold runconfig and log
     description = f"{disclaimer}Aquatic pigments - chlorophyll A content mg m-3, and phycocyanin content (mg m-3) " \
                   f"estimated using mixture density network."
-    metadata = generate_stac_metadata(aquapig_basename, description, run_config_meta)
+    metadata = generate_stac_metadata(aquapig_basename, description, run_config["metadata"])
     assets = {
         "runconfig": f"./{os.path.basename(out_runconfig_path)}",
         "log": f"./{os.path.basename(log_path)}",
@@ -270,7 +267,7 @@ def main():
             description = disclaimer + chla_desc
         elif "PHYCO" in tif_basename:
             description = disclaimer + phyco_desc
-        metadata = generate_stac_metadata(tif_basename, description, run_config_meta)
+        metadata = generate_stac_metadata(tif_basename, description, run_config["metadata"])
         assets = {
             "cog": f"./{os.path.basename(tif_file)}",
             "browse": f"./{os.path.basename(tif_file).replace('.tif', '.png')}",
