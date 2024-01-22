@@ -99,7 +99,9 @@ def generate_stac_metadata(basename, description, in_meta):
     out_meta['start_datetime'] = dt.datetime.strptime(in_meta['start_datetime'], "%Y-%m-%dT%H:%M:%SZ")
     out_meta['end_datetime'] = dt.datetime.strptime(in_meta['end_datetime'], "%Y-%m-%dT%H:%M:%SZ")
     out_meta['geometry'] = in_meta['geometry']
-    product = basename.split('_')[3]
+    base_tokens = basename.split('_')
+    out_meta['collection'] = f"SISTER_{base_tokens[1]}_{base_tokens[2]}_{base_tokens[3]}_{base_tokens[5]}"
+    product = base_tokens[3]
     if "CHL" in basename:
         product += "_CHL"
     elif "PHYCO" in basename:
@@ -108,7 +110,7 @@ def generate_stac_metadata(basename, description, in_meta):
         'sensor': in_meta['sensor'],
         'description': description,
         'product': product,
-        'processing_level': basename.split('_')[2]
+        'processing_level': base_tokens[2]
     }
     return out_meta
 
@@ -120,6 +122,7 @@ def create_item(metadata, assets):
         start_datetime=metadata['start_datetime'],
         end_datetime=metadata['end_datetime'],
         geometry=metadata['geometry'],
+        collection=metadata['collection'],
         bbox=None,
         properties=metadata['properties']
     )
@@ -170,8 +173,8 @@ def main():
     chla_basename = f"{aquapig_basename}_CHL"
     phyco_basename = f"{aquapig_basename}_PHYCO"
 
-    corfl_envi_path = f"input/{corfl_basename}/{corfl_basename}.bin"
-    frcov_tiff_path = f"input/{frcov_basename}/{frcov_basename}.tif"
+    corfl_envi_path = f"{run_config['inputs']['corrected_reflectance_dataset']}/{corfl_basename}.bin"
+    frcov_tiff_path = f"{run_config['inputs']['fractional_cover_dataset']}/{frcov_basename}.tif"
 
     tmp_chla_envi_path = f"work/{corfl_basename}_aqchla"
     tmp_phyco_envi_path = f"work/{corfl_basename}_phyco"
@@ -279,11 +282,13 @@ def main():
     catalog.save(catalog_type=pystac.CatalogType.SELF_CONTAINED)
     print("Catalog HREF: ", catalog.get_self_href())
 
-    # Move the assets from the output directory to the stac item directories
+    # Move the assets from the output directory to the stac item directories and create empty .met.json files
     for item in catalog.get_items():
         for asset in item.assets.values():
             fname = os.path.basename(asset.href)
             shutil.move(f"output/{fname}", f"output/{aquapig_basename}/{item.id}/{fname}")
+        with open(f"output/{aquapig_basename}/{item.id}/{item.id}.met.json", mode="w"):
+            pass
 
 
 if __name__ == "__main__":
