@@ -1,3 +1,5 @@
+set -x
+
 pge_dir=$(cd "$(dirname "$0")" ; pwd -P)
 app_dir=$(dirname ${pge_dir})
 
@@ -14,10 +16,8 @@ pip install pystac==1.8.4
 
 pushd sister-mdn_chlorophyll
 aws s3 cp s3://sister-ops-registry/packages/mdn_chlorophyll_weights/HICO/45313342cb628c8cf45b6e2e29f4dc9a780ee1d403bdb98461e28fcb13ad9ce3.zip MDN/Weights/HICO/45313342cb628c8cf45b6e2e29f4dc9a780ee1d403bdb98461e28fcb13ad9ce3.zip
+unzip  MDN/Weights/HICO/45313342cb628c8cf45b6e2e29f4dc9a780ee1d403bdb98461e28fcb13ad9ce3.zip -d  MDN/Weights/HICO/45313342cb628c8cf45b6e2e29f4dc9a780ee1d403bdb98461e28fcb13ad9ce3
 pip install -e .
-pushd MDN/Weights/HICO
-unzip 45313342cb628c8cf45b6e2e29f4dc9a780ee1d403bdb98461e28fcb13ad9ce3.zip
-popd
 
 conda deactivate
 popd
