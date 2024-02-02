@@ -6,82 +6,67 @@ The sister-aquatic-pigments-pge repository is a wrapper for two aquatic pigment 
 * [Chlorophyll A](https://github.com/EnSpec/sister-mdn_chlorophyll)
 * [Phycocyanin](https://github.com/EnSpec/sister-mdn_phycocyanin)
 
-## Dependencies
-
-This repository is built to run on SISTER (Space-based Imaging Spectroscopy and Thermal pathfindER), a data 
-processing back-end that allows for the registration of algorithms as executable containers and execution of those 
-containers at scale.  The manifest file that configures this repository for registration and describes all of its 
-necessary dependencies is called `algorithm_config.yaml`.  In this file you will find:
-
-* The repository URL and version to register
-* The base Docker image which this repository gets installed into, and a reference to its Dockerfile
-* The build script which is used to install this repository into the base Docker image
-
-Specific dependencies for executing the code in this repository can be found in both the Dockerfile and the build 
-script.
-
-In addition to the above dependencies, you will need access to the MAAP API via the maap-py library in order to 
-register algorithms and submit jobs.  maap-py can be obtained by running:
-
-    git clone --single-branch --branch sister-dev https://gitlab.com/geospec/maap-py.git
-
 ## PGE Arguments
 
 The sister-aquatic-pigments-pge PGE takes the following arguments:
 
 
-| Argument                      | Type   | Description                                        | Default |
-|-------------------------------|--------|----------------------------------------------------|---------|
-| corrected_reflectance_dataset | file   | S3 URL to the corrected reflectance dataset folder | -       |
-| fractional_cover_dataset      | file   | S3 URL to the fractional cover dataset folder      | -       |
-| crid                          | config | Composite Release ID to tag file names             | 000     |
+| Argument                      | Type                                 | Description                                        | Default |
+|-------------------------------|--------------------------------------|----------------------------------------------------|---------|
+| corrected_reflectance_dataset | file                                 | S3 URL to the corrected reflectance dataset folder | -       |
+| fractional_cover_dataset      | file                                 | S3 URL to the fractional cover dataset folder      | -       |
+| crid                          | config                               | Composite Release ID to tag file names             | 000     |
+| experimental                  | Designates outputs as "experimental" | 'True'                                             |
 
 ## Outputs
 
 The L2B aquatic pigments PGE outputs Cloud-Optimized GeoTIFFs (COGs) and associated metadata and ancillary files. The 
 outputs of the PGE use the following naming convention:
 
-    SISTER_INSTRUMENT_LEVEL_PRODUCT_YYYYMMDDTHHMMSS_CRID(_ANCILLARY).EXTENSION
+    (EXPERIMENTAL-)SISTER_INSTRUMENT_LEVEL_PRODUCT_YYYYMMDDTHHMMSS_CRID(_ANCILLARY).EXTENSION
 
-where `(_ANCILLARY)` is optional and is used to identify ancillary products.
+where `(_ANCILLARY)` is optional and is used to identify ancillary products, and the "EXPERIMENTAL-" prefix is also 
+optional and is only added when the "experimental" flag is set to True.
 
-| Product                     | Format, Units                   | Example filename                                           |
-|-----------------------------|---------------------------------|------------------------------------------------------------|
-| Chlorophyll A concentration | Cloud-Optimized GeoTIFF, mg m-3 | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_CHL.tif        |
-| Chlorophyll A metadata      | JSON                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_CHL.met.json   |
-| Chlorophyll A browse image  | PNG                             | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_CHL.png        |
-| Phycocyanin concentration   | Cloud-Optimized GeoTIFF, mg m-3 | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_PHYCO.tif      |
-| Phycocyanin metadata        | JSON                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_PHYCO.met.json |
-| Phycocyanin browse image    | PNG                             | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000_PHYCO.png      |
-| PGE metadata                | JSON                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000.met.json       |
-| PGE log file                | Text                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000.log            |
-| PGE run config              | JSON                            | SISTER_AVNG_L2B_AQUAPIG_20210604T090303_000.runconfig.json |
+The following data products are produced:
 
-## Registering the Repository with SISTER
+| Product                                 | Format, Units                   | Example filename                                           |
+|-----------------------------------------|---------------------------------|------------------------------------------------------------|
+| Chlorophyll A concentration             | Cloud-Optimized GeoTIFF, mg m-3 | SISTER_AVCL_L2B_AQUAPIG_20180126T204322_000_CHL.tif        |
+| Chlorophyll A metadata (STAC formatted) | JSON                            | SISTER_AVCL_L2B_AQUAPIG_20180126T204322_000_CHL.json       |
+| Chlorophyll A browse image              | PNG                             | SISTER_AVCL_L2B_AQUAPIG_20180126T204322_000_CHL.png        |
+| Phycocyanin concentration               | Cloud-Optimized GeoTIFF, mg m-3 | SISTER_AVCL_L2B_AQUAPIG_20180126T204322_000_PHYCO.tif      |
+| Phycocyanin metadata (STAC formatted)   | JSON                            | SISTER_AVCL_L2B_AQUAPIG_20180126T204322_000_PHYCO.json     |
+| Phycocyanin browse image                | PNG                             | SISTER_AVCL_L2B_AQUAPIG_20180126T204322_000_PHYCO.png      |
+| PGE metadata (STAC formatted)           | JSON                            | SISTER_AVCL_L2B_AQUAPIG_20180126T204322_000.json           |
+| PGE log file                            | Text                            | SISTER_AVCL_L2B_AQUAPIG_20180126T204322_000.log            |
+| PGE run config                          | JSON                            | SISTER_AVCL_L2B_AQUAPIG_20180126T204322_000.runconfig.json |
 
-    from maap.maap import MAAP
-    
-    maap = MAAP(maap_host="34.216.77.111")
-    
-    algo_config_path = "sister-aquatic-pigments-pge/algorithm_config.yaml"
-    response = maap.register_algorithm_from_yaml_file(file_path=algo_config_path)
-    print(response.text)
+Metadata files are [STAC formatted](https://stacspec.org/en) and compatible with tools in the [STAC ecosystem](https://stacindex.org/ecosystem).
 
-## Submitting a Job on SISTER
+## Executing the Algorithm
 
-    from maap.maap import MAAP
-    
-    maap = MAAP(maap_host="34.216.77.111")
-    
-    response = maap.submitJob(
-        algo_id="sister-aquatic-pigments-pge",
-        version="1.0.0",
-        corrected_reflectance_dataset="s3://s3.us-west-2.amazonaws.com:80/sister-ops-workspace/LOM/PRODUCTS/AVNG/L2A_CORFL/2021/06/04/SISTER_AVNG_L2A_CORFL_20210604T090303_001",
-        fractional_cover_dataset="s3://s3.us-west-2.amazonaws.com:80/sister-ops-workspace/LOM/PRODUCTS/AVNG/L2B_FRCOV/2021/06/04/SISTER_AVNG_L2B_FRCOV_20210604T090303_001",
-        crid="000",
-        publish_to_cmr=False,
-        cmr_metadata={},
-        queue="sister-job_worker-16gb",
-        identifier="WO_AP_20230425_AVNG_1")
-    
-    print(response.id, response.status)
+This algorithm requires [Anaconda Python](https://www.anaconda.com/download)
+
+To install and run the code, first clone the repository and execute the install script:
+
+    git clone https://github.com/sister-jpl/sister-aquatic-pigments-pge.git
+    cd sister-aquatic-pigments-pge
+    ./install.sh
+    cd ..
+
+Then, create a working directory and enter it:
+
+    mkdir WORK_DIR
+    cd WORK_DIR
+
+Copy input files to the work directory. For each "dataset" input, create a folder with the dataset name, then download 
+the data file(s) and STAC JSON file into the folder.  For example, the reflectance dataset input would look like this:
+
+    WORK_DIR/SISTER_AVCL_L2A_CORFL_20180126T204322_000/SISTER_AVCL_L2A_CORFL_20180126T204322_000.bin
+    WORK_DIR/SISTER_AVCL_L2A_CORFL_20180126T204322_000/SISTER_AVCL_L2A_CORFL_20180126T204322_000.hdr
+    WORK_DIR/SISTER_AVCL_L2A_CORFL_20180126T204322_000/SISTER_AVCL_L2A_CORFL_20180126T204322_000.json
+
+Finally, run the code 
+
+    ../sister-aquatic-pigments-pge/run.sh --corrected_reflectance_dataset SISTER_AVCL_L2A_CORFL_20180126T204322_000 --fractional_cover_dataset SISTER_AVCL_L2B_FRCOV_20180126T204322_000
