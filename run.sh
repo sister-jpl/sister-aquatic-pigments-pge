@@ -7,7 +7,7 @@ source activate ap-chla
 REPO_DIR=$(cd "$(dirname "$0")"; pwd -P)
 
 # Generate runconfig
-python ${REPO_DIR}/generate_runconfig.py inputs.json
+python ${REPO_DIR}/generate_runconfig.py "${@:1}"
 
 # Execute aquatic-pigments
 python ${REPO_DIR}/sister_aquatic_pigments.py runconfig.json

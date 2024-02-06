@@ -6,6 +6,8 @@ Space-based Imaging Spectroscopy and Thermal PathfindER
 Author: Winston Olson-Duvall
 """
 
+import datetime as dt
+import glob
 import json
 import os
 import shutil
@@ -14,10 +16,10 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pystac
 
 from osgeo import gdal
 from PIL import Image
-
 
 
 def get_aquapig_basename(corfl_basename, crid):
@@ -28,16 +30,7 @@ def get_aquapig_basename(corfl_basename, crid):
     return "_".join(tokens)
 
 
-def generate_metadata(run_config, json_path, new_metadata):
-
-    metadata = run_config['metadata']
-    for key, value in new_metadata.items():
-        metadata[key] = value
-    with open(json_path, 'w') as out_obj:
-        json.dump(metadata, out_obj, indent=4)
-
-
-def convert_to_geotiff_and_png(pigment_path, basename, band_name, units, description):
+def convert_to_geotiff_and_png(pigment_path, basename, band_name, units, description, disclaimer):
 
     in_file = gdal.Open(pigment_path)
 
@@ -56,7 +49,7 @@ def convert_to_geotiff_and_png(pigment_path, basename, band_name, units, descrip
     tiff.SetProjection(in_file.GetProjection())
 
     # Dataset description
-    tiff.SetMetadataItem("DESCRIPTION", description)
+    tiff.SetMetadataItem("DESCRIPTION", disclaimer + description)
 
     in_band = in_file.GetRasterBand(1)
 
@@ -99,6 +92,46 @@ def convert_to_geotiff_and_png(pigment_path, basename, band_name, units, descrip
     im.save(quicklook_file)
 
 
+def generate_stac_metadata(basename, description, in_meta):
+
+    out_meta = {}
+    out_meta['id'] = basename
+    out_meta['start_datetime'] = dt.datetime.strptime(in_meta['start_datetime'], "%Y-%m-%dT%H:%M:%SZ")
+    out_meta['end_datetime'] = dt.datetime.strptime(in_meta['end_datetime'], "%Y-%m-%dT%H:%M:%SZ")
+    out_meta['geometry'] = in_meta['geometry']
+    base_tokens = basename.split('_')
+    out_meta['collection'] = f"SISTER_{base_tokens[1]}_{base_tokens[2]}_{base_tokens[3]}_{base_tokens[5]}"
+    product = base_tokens[3]
+    if "CHL" in basename:
+        product += "_CHL"
+    elif "PHYCO" in basename:
+        product += "_PHYCO"
+    out_meta['properties'] = {
+        'sensor': in_meta['sensor'],
+        'description': description,
+        'product': product,
+        'processing_level': base_tokens[2]
+    }
+    return out_meta
+
+
+def create_item(metadata, assets):
+    item = pystac.Item(
+        id=metadata['id'],
+        datetime=metadata['start_datetime'],
+        start_datetime=metadata['start_datetime'],
+        end_datetime=metadata['end_datetime'],
+        geometry=metadata['geometry'],
+        collection=metadata['collection'],
+        bbox=None,
+        properties=metadata['properties']
+    )
+    # Add assets
+    for key, href in assets.items():
+        item.add_asset(key=key, asset=pystac.Asset(href=href))
+    return item
+
+
 def main():
     """
         This function takes as input the path to an inputs.json file and exports a run config json
@@ -111,6 +144,13 @@ def main():
     print("Reading in runconfig")
     with open(in_file, "r") as f:
         run_config = json.load(f)
+
+    # Get experimental
+    experimental = run_config['inputs']['experimental']
+    if experimental:
+        disclaimer = "(DISCLAIMER: THIS DATA IS EXPERIMENTAL AND NOT INTENDED FOR SCIENTIFIC USE) "
+    else:
+        disclaimer = ""
 
     # Make work dir
     print("Making work directory")
@@ -127,19 +167,14 @@ def main():
     mdn_chla_dir = os.path.join(os.path.dirname(sister_aqua_pig_dir), "sister-mdn_chlorophyll")
     mdn_phyco_dir = os.path.join(os.path.dirname(sister_aqua_pig_dir), "sister-mdn_phycocyanin")
 
-    corfl_basename = None
-    frcov_basename = None
-    for file in run_config["inputs"]["file"]:
-        if "corrected_reflectance_dataset" in file:
-            corfl_basename = os.path.basename(file["corrected_reflectance_dataset"])
-        if "fractional_cover_dataset" in file:
-            frcov_basename = os.path.basename(file["fractional_cover_dataset"])
-    aquapig_basename = get_aquapig_basename(corfl_basename, run_config["inputs"]["config"]["crid"])
+    corfl_basename = os.path.basename(run_config["inputs"]["corrected_reflectance_dataset"])
+    frcov_basename = os.path.basename(run_config["inputs"]["fractional_cover_dataset"])
+    aquapig_basename = get_aquapig_basename(corfl_basename, run_config["inputs"]["crid"])
     chla_basename = f"{aquapig_basename}_CHL"
     phyco_basename = f"{aquapig_basename}_PHYCO"
 
-    corfl_envi_path = f"input/{corfl_basename}/{corfl_basename}.bin"
-    frcov_tiff_path = f"input/{frcov_basename}/{frcov_basename}.tif"
+    corfl_envi_path = f"{run_config['inputs']['corrected_reflectance_dataset']}/{corfl_basename}.bin"
+    frcov_tiff_path = f"{run_config['inputs']['fractional_cover_dataset']}/{frcov_basename}.tif"
 
     tmp_chla_envi_path = f"work/{corfl_basename}_aqchla"
     tmp_phyco_envi_path = f"work/{corfl_basename}_phyco"
@@ -182,37 +217,78 @@ def main():
     print("Running phyco command: " + " ".join(phyco_cmd))
     subprocess.run(" ".join(phyco_cmd), shell=True)
 
-    # Generate metadata
-    print("Generating metadata in .met.json files")
-    generate_metadata(run_config,
-                      f"output/{aquapig_basename}.met.json",
-                      {'product': 'AQUAPIG',
-                       'processing_level': 'L2B',
-                       'description': "Aquatic pigments - chlorophyll A content mg m-3, and phycocyanin content (mg m-3) "
-                                      "estimated using mixture density network."})
-
     chla_desc = "Chlorophyll A content mg m-3"
-    generate_metadata(run_config,
-                      f"output/{chla_basename}.met.json",
-                      {'product': 'AQUAPIG_CHL',
-                       'processing_level': 'L2B',
-                       'description': chla_desc})
-
     phyco_desc = "Phycocyanin content (mg m-3) estimated using mixture density network."
-    generate_metadata(run_config,
-                      f"output/{phyco_basename}.met.json",
-                      {'product': 'AQUAPIG_PHYCO',
-                       'processing_level': 'L2B',
-                       'description': phyco_desc})
 
     # Convert to geotiff and png
     print("Converting ENVI files to GeoTIFF and PNG and saving to output folder")
-    convert_to_geotiff_and_png(tmp_chla_envi_path, chla_basename, "chlorophyll_a", "mg m-3", chla_desc)
-    convert_to_geotiff_and_png(tmp_phyco_envi_path, phyco_basename, "phycocyanin", "mg m-3", phyco_desc)
+    convert_to_geotiff_and_png(tmp_chla_envi_path, chla_basename, "chlorophyll_a", "mg m-3", chla_desc, disclaimer)
+    convert_to_geotiff_and_png(tmp_phyco_envi_path, phyco_basename, "phycocyanin", "mg m-3", phyco_desc, disclaimer)
 
     # Copy any remaining files to output
     print("Copying runconfig to output folder")
     shutil.copyfile("runconfig.json", f"output/{aquapig_basename}.runconfig.json")
+
+    # If experimental, prefix filenames with "EXPERIMENTAL-"
+    if experimental:
+        for file in glob.glob(f"output/SISTER*"):
+            shutil.move(file, f"output/EXPERIMENTAL-{os.path.basename(file)}")
+
+    # Update the path variables if now experimental
+    log_path = glob.glob("output/*%s.log" % run_config['inputs']['crid'])[0]
+    out_runconfig_path = log_path.replace(".log", ".runconfig.json")
+    aquapig_basename = os.path.basename(log_path)[:-4]
+
+    # Generate STAC
+    catalog = pystac.Catalog(id=aquapig_basename,
+                             description=f'{disclaimer}This catalog contains the output data products of the SISTER '
+                                         f'aquatic pigments PGE, including chlorophyll A and phycocyanin in '
+                                         f'cloud-optimized GeoTIFF format. Execution artifacts including the '
+                                         f'runconfig file and execution log file are also included.')
+
+    # Add an item for the top level to hold runconfig and log
+    description = f"{disclaimer}Aquatic pigments - chlorophyll A content mg m-3, and phycocyanin content (mg m-3) " \
+                  f"estimated using mixture density network."
+    metadata = generate_stac_metadata(aquapig_basename, description, run_config["metadata"])
+    assets = {
+        "runconfig": f"./{os.path.basename(out_runconfig_path)}",
+        "log": f"./{os.path.basename(log_path)}",
+    }
+    item = create_item(metadata, assets)
+    catalog.add_item(item)
+
+    # Add items for data products
+    tif_files = glob.glob("output/*SISTER*.tif")
+    tif_files.sort()
+    for tif_file in tif_files:
+        tif_basename = os.path.basename(tif_file)[:-4]
+        if "CHL" in tif_basename:
+            description = disclaimer + chla_desc
+        elif "PHYCO" in tif_basename:
+            description = disclaimer + phyco_desc
+        metadata = generate_stac_metadata(tif_basename, description, run_config["metadata"])
+        assets = {
+            "cog": f"./{os.path.basename(tif_file)}",
+            "browse": f"./{os.path.basename(tif_file).replace('.tif', '.png')}",
+        }
+        item = create_item(metadata, assets)
+        catalog.add_item(item)
+
+    # set catalog hrefs
+    catalog.normalize_hrefs(f"./output/{aquapig_basename}")
+
+    # save the catalog
+    catalog.describe()
+    catalog.save(catalog_type=pystac.CatalogType.SELF_CONTAINED)
+    print("Catalog HREF: ", catalog.get_self_href())
+
+    # Move the assets from the output directory to the stac item directories and create empty .met.json files
+    for item in catalog.get_items():
+        for asset in item.assets.values():
+            fname = os.path.basename(asset.href)
+            shutil.move(f"output/{fname}", f"output/{aquapig_basename}/{item.id}/{fname}")
+        with open(f"output/{aquapig_basename}/{item.id}/{item.id}.met.json", mode="w"):
+            pass
 
 
 if __name__ == "__main__":
